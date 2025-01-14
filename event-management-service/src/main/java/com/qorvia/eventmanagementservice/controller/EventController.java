@@ -298,12 +298,27 @@ public class EventController {
     }
 
 
-    @GetMapping("/sendSampleMessageViaMQ")
-    public ResponseEntity<?> sendSampleMessageViaMQ(@RequestParam("message") String message){
-        SampleMessage sampleMessage = SampleMessage.builder().data(message).build();
-//        sampleService.sendSampleMessage(sampleMessage);
-        return ResponseEntity.ok("successfully send the message");
+    @GetMapping("/getAllRegisteredEvents")
+    @RequireRole(role = Roles.USER)
+    public ResponseEntity<List<RegisteredEventDTO>> getAllRegisteredEvents(HttpServletRequest servletRequest){
+        Long userId = jwtService.getUserIdFormRequest(servletRequest);
+        return eventService.getAllRegisteredEventsByUserId(userId);
     }
+
+    @GetMapping("/fetch-all-live")
+    @RequireRole(role = Roles.ORGANIZER)
+    public ResponseEntity<List<LiveEvent>> getAllLive(HttpServletRequest servletRequest){
+        Long organizerId = jwtService.getUserIdFormRequest(servletRequest);
+        return eventService.getAllLive(organizerId);
+    }
+
+
+//    @GetMapping("/sendSampleMessageViaMQ")
+//    public ResponseEntity<?> sendSampleMessageViaMQ(@RequestParam("message") String message){
+//        SampleMessage sampleMessage = SampleMessage.builder().data(message).build();
+////        sampleService.sendSampleMessage(sampleMessage);
+//        return ResponseEntity.ok("successfully send the message");
+//    }
 
 
 }

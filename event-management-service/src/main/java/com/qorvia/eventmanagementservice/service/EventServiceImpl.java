@@ -1,5 +1,6 @@
 package com.qorvia.eventmanagementservice.service;
 
+import com.qorvia.eventmanagementservice.clients.CommunicationClient;
 import com.qorvia.eventmanagementservice.dto.*;
 import com.qorvia.eventmanagementservice.dto.request.CreateOfflineEventDetailRequest;
 import com.qorvia.eventmanagementservice.dto.request.CreateOfflineEventTicketRequest;
@@ -7,6 +8,7 @@ import com.qorvia.eventmanagementservice.dto.request.CreateOnlineEventDetailRequ
 import com.qorvia.eventmanagementservice.dto.request.EventCategoryRequest;
 import com.qorvia.eventmanagementservice.dto.response.*;
 import com.qorvia.eventmanagementservice.model.*;
+import com.qorvia.eventmanagementservice.repository.BookingRepository;
 import com.qorvia.eventmanagementservice.repository.EventApprovalRequestRepository;
 import com.qorvia.eventmanagementservice.repository.EventCategoryRepository;
 import com.qorvia.eventmanagementservice.repository.EventRepository;
@@ -31,6 +33,8 @@ public class EventServiceImpl implements EventService {
     private final EventCategoryRepository eventCategoryRepository;
     private final EventRepository eventRepository;
     private final EventApprovalRequestRepository eventApprovalRequestRepository;
+    private final BookingRepository bookingRepository;
+    private final CommunicationClient communicationClient;
 
     @Override
     public ResponseEntity<?> categoryRequest(EventCategoryRequest categoryRequest) {
@@ -917,6 +921,70 @@ public class EventServiceImpl implements EventService {
         return ResponseEntity.ok(eventSettingDTO);
     }
 
+    @Override
+    public ResponseEntity<List<RegisteredEventDTO>> getAllRegisteredEventsByUserId(Long userId) {
+        List<PaymentStatus> statuses = Arrays.asList(PaymentStatus.NONE, PaymentStatus.COMPLETED);
+
+        List<Booking> bookings = bookingRepository.findByUserIdAndPaymentStatusIn(userId, statuses);
+
+        List<UUID> eventIds = bookings.stream()
+                .map(Booking::getEventId)
+                .map(UUID::fromString)
+                .distinct()
+                .toList();
+
+        List<Event> events = eventRepository.findAllById(eventIds);
+
+        List<RegisteredEventDTO> registeredEventDTOs = events.stream()
+                .map(event -> {
+                    RegisteredEventDTO dto = new RegisteredEventDTO();
+                    dto.setId(event.getId().toString());
+                    dto.setName(event.getName());
+                    dto.setOnline(event.isOnline());
+                    dto.setImageUrl(event.getImageUrl());
+                    if (!event.getTimeSlots().isEmpty()) {
+                        EventTimeSlot firstSlot = event.getTimeSlots().get(0);
+                        dto.setStartDateAndTime(firstSlot.getDate() + " " + firstSlot.getStartTime());
+                        dto.setEndDateAndTime(firstSlot.getDate() + " " + firstSlot.getEndTime());
+                    } else {
+                        dto.setStartDateAndTime(null);
+                        dto.setEndDateAndTime(null);
+                    }
+                    return dto;
+                })
+                .toList();
+
+        return ResponseEntity.ok(registeredEventDTOs);
+    }
+
+    @Override
+    public ResponseEntity<List<LiveEvent>> getAllLive(Long organizerId) {
+        LocalDateTime now = LocalDateTime.now();
+
+        List<Event> events = eventRepository.findByOrganizerIdAndIsDeletedFalse(organizerId);
+
+        List<LiveEvent> liveEvents = events.stream()
+                .filter(event -> event.getTimeSlots().stream().anyMatch(slot -> {
+                    LocalDateTime startDateTime = LocalDateTime.parse(slot.getDate() + "T" + slot.getStartTime());
+                    LocalDateTime endDateTime = LocalDateTime.parse(slot.getDate() + "T" + slot.getEndTime());
+                    return now.isAfter(startDateTime) && now.isBefore(endDateTime);
+                }))
+                .map(event -> {
+                    LiveEvent liveEvent = new LiveEvent();
+                    liveEvent.setId(event.getId().toString());
+                    liveEvent.setName(event.getName());
+                    liveEvent.setStartDateAndTime(event.getTimeSlots().get(0).getDate() + "T" + event.getTimeSlots().get(0).getStartTime());
+                    liveEvent.setEndDateAndTime(event.getTimeSlots().get(0).getDate() + "T" + event.getTimeSlots().get(0).getEndTime());
+                    liveEvent.setImageUrl(event.getImageUrl());
+                    liveEvent.setOnline(event.isOnline());
+                    return liveEvent;
+                })
+                .toList();
+
+        return ResponseEntity.ok(liveEvents);
+    }
+
+
 
     @Override
     public ResponseEntity<?> eventAcceptAndReject(String eventId, String status) {
@@ -946,6 +1014,19 @@ public class EventServiceImpl implements EventService {
         }
         event.setApprovalStatus(approvalStatus);
         eventRepository.save(event);
+
+        String startTimeAndDate = event.getTimeSlots().get(0).getDate() + "T" + event.getTimeSlots().get(0).getStartTime();
+        String endTimeAndDate = event.getTimeSlots().get(0).getDate() + "T" + event.getTimeSlots().get(0).getStartTime();
+
+        ScheduleEventDTO scheduleEventDTO = ScheduleEventDTO.builder()
+                .imageUrl(event.getImageUrl())
+                .eventId(eventId)
+                .name(event.getName())
+                .startDateAndTime(startTimeAndDate)
+                .endDateAndTime(endTimeAndDate)
+                .build();
+
+        communicationClient.scheduleEvent(scheduleEventDTO);
 
         return ResponseEntity.ok("Event approval status updated successfully.");
     }

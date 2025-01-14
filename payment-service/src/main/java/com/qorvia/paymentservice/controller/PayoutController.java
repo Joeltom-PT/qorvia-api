@@ -26,8 +26,10 @@ public class PayoutController {
 
     @PostMapping("/onboard-stripe-account")
     public ResponseEntity<String> generateAccountLinkForOnboarding(@RequestBody StripeAccountOnboardingRequest stripeAccountOnboardingRequest) {
+        log.info("Requested to get the connecting link");
         try {
             String url = payoutService.connectOrganizerAccount(stripeAccountOnboardingRequest);
+            log.info("connecting link generated : {}", url);
             return ResponseEntity.ok(url);
         } catch (StripeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

@@ -75,4 +75,8 @@ public interface EventService {
     ResponseEntity<?> getOfflineEventData(String eventId);
 
     ResponseEntity<?> getEventSettings(String eventId, Long organizerId);
+
+    ResponseEntity<List<RegisteredEventDTO>> getAllRegisteredEventsByUserId(Long userId);
+
+    ResponseEntity<List<LiveEvent>> getAllLive(Long organizerId);
 }

@@ -1,5 +1,6 @@
 package com.qorvia.eventmanagementservice.service;
 
+import com.qorvia.eventmanagementservice.clients.CommunicationClient;
 import com.qorvia.eventmanagementservice.clients.NotificationClient;
 import com.qorvia.eventmanagementservice.clients.PaymentClient;
 import com.qorvia.eventmanagementservice.dto.*;
@@ -35,6 +36,7 @@ public class BookingServiceImpl implements BookingService{
     private final PaymentClient paymentClient;
     private final NotificationClient notificationClient;
     private final ApplicationEventPublisher eventPublisher;
+    private final CommunicationClient communicationClient;
 
 
     @Override
@@ -120,6 +122,15 @@ public class BookingServiceImpl implements BookingService{
         }
 
         int finalAmount = (int) (totalAmount - totalDiscount);
+
+        if (finalAmount <= 0){
+            RoomAccessDTO roomAccessDTO = new RoomAccessDTO();
+            roomAccessDTO.setUserId(userId);
+            roomAccessDTO.setUserEmail(email);
+            roomAccessDTO.setEventId(String.valueOf(event.getId()));
+            communicationClient.allowRoom(roomAccessDTO);
+            log.info("Allow access requested to communication service");
+        }
 
         String paymentLink = null;
         String paymentSessionId = null;

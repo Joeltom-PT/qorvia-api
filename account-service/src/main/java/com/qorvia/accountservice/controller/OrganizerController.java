@@ -55,7 +55,7 @@ public class OrganizerController {
     }
 
 
-    @PostMapping("/connect-account-for-payout")
+    @GetMapping("/connect-account-for-payout")
     public ResponseEntity<?> getAccountConnectingLink(HttpServletRequest servletRequest) {
         try {
             Long organizerId = jwtService.getUserIdFormJwtToken(servletRequest);

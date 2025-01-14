@@ -27,30 +27,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableWebSecurity
 public class SecurityConfig {
 
-//    @Bean
-//    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-//        http.csrf(AbstractHttpConfigurer::disable)
-//                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-//                .authorizeHttpRequests(request -> request
-////                        .requestMatchers(
-////                                "/v3/api-docs/**",
-////                                "/swagger-ui/**",
-////                                "/swagger-ui.html",
-////                                "/swagger-resources/**",
-////                                "/webjars/**"
-////                        ).permitAll()
-//                        .requestMatchers("/account/auth/**","/account/public/**").permitAll()
-//                        .requestMatchers("/account/user/**").hasRole("USER")
-////                        .requestMatchers("/account/follow/**").hasRole("USER")
-//                        .requestMatchers("/account/organizer/**").hasRole("ORGANIZER")
-//                        .requestMatchers("/account/admin/**").hasRole("ADMIN")
-////                        .requestMatchers( ).permitAll()
-//                        .anyRequest().authenticated())
-//                .addFilterBefore(jwtAuthFilter(), UsernamePasswordAuthenticationFilter.class);
-//
-//        return http.build();
-//    }
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
