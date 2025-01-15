@@ -1,4 +1,4 @@
-package com.qorvia.eventmanagementservice.config;
+package com.qorvia.communicationservice.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -7,7 +7,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
-public class SecurityConfig {
+public class CorsConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {

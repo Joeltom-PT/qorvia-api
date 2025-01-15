@@ -21,7 +21,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -1015,8 +1018,20 @@ public class EventServiceImpl implements EventService {
         event.setApprovalStatus(approvalStatus);
         eventRepository.save(event);
 
-        String startTimeAndDate = event.getTimeSlots().get(0).getDate() + "T" + event.getTimeSlots().get(0).getStartTime();
-        String endTimeAndDate = event.getTimeSlots().get(0).getDate() + "T" + event.getTimeSlots().get(0).getStartTime();
+        String date = event.getTimeSlots().get(0).getDate();
+        String startTime = event.getTimeSlots().get(0).getStartTime();
+        String endTime = event.getTimeSlots().get(0).getEndTime();
+
+        LocalDate localDate = LocalDate.parse(date);
+        LocalTime localStartTime = LocalTime.parse(startTime);
+        LocalTime localEndTime = LocalTime.parse(endTime);
+
+        LocalDateTime startDateTime = LocalDateTime.of(localDate, localStartTime);
+        LocalDateTime endDateTime = LocalDateTime.of(localDate, localEndTime);
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+        String startTimeAndDate = startDateTime.format(formatter);
+        String endTimeAndDate = endDateTime.format(formatter);
 
         ScheduleEventDTO scheduleEventDTO = ScheduleEventDTO.builder()
                 .imageUrl(event.getImageUrl())
