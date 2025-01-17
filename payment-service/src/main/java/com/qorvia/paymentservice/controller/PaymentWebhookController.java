@@ -2,6 +2,7 @@ package com.qorvia.paymentservice.controller;
 
 import com.qorvia.paymentservice.model.PaymentStatus;
 import com.qorvia.paymentservice.service.PaymentService;
+import com.qorvia.paymentservice.service.PayoutAccountService;
 import com.qorvia.paymentservice.service.PayoutService;
 import com.stripe.model.Account;
 import com.stripe.model.Event;
@@ -30,7 +31,7 @@ public class PaymentWebhookController {
     private static final String STRIPE_WEBHOOK_SECRET = "whsec_54485c1c064b53813218c624ac28195bf2793223dca24e3d35c4ae4a5857c24d";
 
     private final PaymentService paymentService;
-    private final PayoutService payoutService;
+    private final PayoutAccountService payoutAccountService;
 
     @PostMapping("/webhook")
     public ResponseEntity<?> handleStripeWebhook(HttpServletRequest request, @RequestBody String payload) {
@@ -88,7 +89,7 @@ public class PaymentWebhookController {
                 case "account.updated":
                     Account account = (Account) event.getData().getObject();
                     try {
-                        payoutService.handleAccountUpdate(account);
+                        payoutAccountService.handleAccountUpdate(account);
                     } catch (Exception e) {
                         log.error("Failed to handle account updated event: {}", account.getId(), e);
                     }
